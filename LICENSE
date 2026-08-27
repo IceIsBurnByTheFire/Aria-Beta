@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Aria contributors
+Copyright (c) 2026 IceIsBurnByTheFire
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,28 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-This licence covers the code in this repository only.
-
-Nothing that setup downloads is covered by it, and two of those have their own
-terms worth knowing about:
-
-  Live2D Cubism Core  — fetched from Live2D's CDN at setup time and never
-                        redistributed here. Free for small-scale and personal
-                        use under Live2D's own licence; commercial use above
-                        their revenue threshold requires a licence from them.
-                        https://www.live2d.com/en/sdk/license/
-
-  Haru                 — a Live2D sample character, fetched at setup time.
-                        Live2D's sample data terms apply, and they are not the
-                        same as the SDK terms. Fine for personal use; check
-                        before shipping anything with her in it.
-
-  Kokoro-82M (TTS)     — Apache 2.0.
-  Silero VAD           — MIT.
-  faster-whisper       — MIT, wrapping OpenAI's Whisper weights (MIT).
-
-If you add your own Live2D character, its licence is between you and whoever
-made it. See docs/CHARACTERS.md.

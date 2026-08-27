@@ -1,8 +1,16 @@
 # Third-party notices
 
-Aria's own code is MIT — see [LICENSE](LICENSE). Two things it uses are **not** ours and
-are **not** MIT. Neither is in this repository; both are downloaded by `Setup.bat` onto
-the machine that will run them, which is a licensed use rather than a redistribution.
+Aria's own code is MIT — see [LICENSE](LICENSE), which covers the code in this repository
+and nothing that setup downloads.
+
+That file is deliberately nothing but the MIT text. These notices used to live at the
+bottom of it, which made GitHub's licence detector report the project as `NOASSERTION`
+rather than MIT — it matches LICENSE against known licence texts, and an appended section
+stops it matching. The information is better here anyway, where it has room.
+
+Two of the downloaded pieces are **not** ours and are **not** MIT. Neither is in this
+repository; both are downloaded by `Setup.bat` onto the machine that will run them, which
+is a licensed use rather than a redistribution.
 
 This page is a summary written for someone deciding whether they can use this project. It
 is not legal advice and it is not a substitute for the agreements themselves, which are
@@ -75,9 +83,22 @@ one comes with terms you negotiate yourself.
 
 ---
 
+## The speech models
+
+Downloaded by `aria.setup_models` into `core/models/`, which is gitignored. All three are
+permissively licensed — none carries restrictions like Live2D's, and none is redistributed
+by this repository.
+
+| | Licence | What it does |
+|---|---|---|
+| **Kokoro-82M** | Apache 2.0 | Her voice |
+| **Silero VAD** | MIT | Hearing when you start and stop speaking |
+| **faster-whisper** | MIT, wrapping OpenAI's Whisper weights (MIT) | Turning your speech into text |
+
 ## Everything else
 
 Python and Node dependencies carry their own licences, recorded in `core/uv.lock` and
-`overlay/package-lock.json`. The speech models downloaded by `aria.setup_models` — Silero
-VAD and Kokoro — are fetched at setup and carry their own terms; neither is in this
-repository either.
+`overlay/package-lock.json`.
+
+Any Live2D character you add yourself is between you and whoever made it — see
+[docs/CHARACTERS.md](docs/CHARACTERS.md).
