@@ -1,0 +1,26 @@
+{
+  "_comment": "Switch characters from the tray menu (Character) - it hot-swaps with no restart and writes the choice back here. Path is relative to overlay/assets/models/.",
+  "model": "haru/Haru.model3.json",
+  "_exclude": "Expression and motion group names containing any of these are hidden from core, so the LLM is never offered them. Substring match, case-insensitive.",
+  "exclude_from_ai": [
+    "nsfw",
+    "jb"
+  ],
+  "_size": "Base window size in pixels. The scroll wheel scales this at runtime; the scaled result is remembered between runs.",
+  "width": 400,
+  "height": 600,
+  "_subtitle": "Caption styling. position is top|middle|bottom; offsets nudge from there in pixels (y is positive downward); max_chars caps line length so the caption stays near the character. Tray > Subtitle changes these live and writes them back here.",
+  "subtitle": {
+    "enabled": true,
+    "font_size": 15,
+    "position": "middle",
+    "align": "left",
+    "offset_x": 96,
+    "offset_y": 48,
+    "max_lines": 4,
+    "max_chars": 30
+  },
+  "core": "ws://127.0.0.1:8765",
+  "_strip": "Where the quick-action buttons sit on the character window: bottom-left, bottom-right, top-left, top-right, or hidden. Panel > Look changes this live.",
+  "strip": "bottom-left"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "aria-overlay",
+  "version": "0.1.0",
+  "description": "Aria's Live2D character as a transparent desktop overlay",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "fetch-assets": "node scripts/fetch-assets.mjs",
+    "check-model": "node scripts/check-model.mjs",
+    "start": "electron .",
+    "postinstall": "node scripts/fetch-assets.mjs"
+  },
+  "dependencies": {
+    "@pixi/unsafe-eval": "^6.5.10",
+    "pixi-live2d-display": "^0.4.0",
+    "pixi.js": "^6.5.10"
+  },
+  "_overrides": "pixi-live2d-display lists gh-pages as a runtime dependency, which it is not - it is the tool that publishes their docs site, and nothing in the browser ever loads it. The version it asks for has a critical prototype-pollution advisory, so a public checkout of this repo fails `npm audit` on a package that is never executed. The alternative npm offers is downgrading pixi-live2d-display to 0.3.1, which is the release before Cubism 4 support and would take the character with it.",
+  "overrides": {
+    "gh-pages": "^6.0.0"
+  },
+  "devDependencies": {
+    "electron": "^43.4.1"
+  }
+}

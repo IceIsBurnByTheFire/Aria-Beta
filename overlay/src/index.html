@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- Everything is local except the one WebSocket back to core. Narrow on purpose:
+         this page never talks to the network, so nothing should be able to make it. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none';
+               script-src 'self' file:;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: file:;
+               connect-src ws://127.0.0.1:8765 file:;"
+    />
+    <title>Aria</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        /* Must stay fully transparent — this is what the desktop shows through. */
+        background: transparent;
+        /* The character is the window; nothing here should look selectable. */
+        user-select: none;
+        cursor: default;
+      }
+
+      #stage {
+        width: 100%;
+        height: 100%;
+      }
+
+      #status {
+        position: absolute;
+        left: 8px;
+        bottom: 6px;
+        font: 11px/1.4 system-ui, sans-serif;
+        color: rgba(255, 255, 255, 0.85);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+        pointer-events: none;
+        transition: opacity 0.4s;
+      }
+
+      /* Geometry and size are driven from config.json via renderer.js — see
+         applySubtitleStyle(). Only the things that never change live here. */
+      #subtitle {
+        position: absolute;
+        overflow: hidden;
+        font-family: system-ui, sans-serif;
+        line-height: 1.45;
+        color: #fff;
+        text-shadow:
+          0 1px 4px rgba(0, 0, 0, 0.95),
+          0 0 12px rgba(0, 0, 0, 0.7);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+
+      #subtitle.visible {
+        opacity: 1;
+      }
+
+      /* Screen-watching indicator. Deliberately always-on-top of the character and
+         never faded out — the whole point is that you can tell at a glance, without
+         having to remember whether you turned it on. */
+      /*
+        Faded until you go near her, so it isn't a permanent widget stuck to the
+        desktop. `pointer-events: auto` is load-bearing: the window is click-through
+        except where the renderer decides otherwise, and without this the buttons are
+        drawn but not clickable.
+      */
+      #strip {
+        position: absolute;
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55);
+        opacity: 0;
+        transition: opacity 0.18s;
+        pointer-events: auto;
+      }
+      /* Corner is a class so the panel can move it without touching layout code. */
+      #strip.bottom-left  { left: 8px;  bottom: 10px; }
+      #strip.bottom-right { right: 8px; bottom: 10px; }
+      #strip.top-left     { left: 8px;  top: 10px; }
+      #strip.top-right    { right: 8px; top: 10px; }
+      #strip.hidden       { display: none; }
+
+      body:hover #strip,
+      #strip:hover { opacity: 1; }
+      #strip button {
+        width: 26px;
+        height: 26px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #fff;
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      #strip button:hover { background: rgba(255, 255, 255, 0.16); }
+      #strip button.on { background: rgba(255, 120, 120, 0.35); }
+
+      #watching {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        display: none;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px 3px 6px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.55);
+        font: 10px/1 system-ui, sans-serif;
+        color: #fff;
+        pointer-events: none;
+      }
+
+      #watching.on {
+        display: flex;
+      }
+
+      #watching::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ff5f56;
+      }
+
+      /* A capture is happening right now — pulse so it is visible, not just present. */
+      #watching.capturing::before {
+        animation: pulse 0.7s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        50% { opacity: 0.25; }
+      }
+
+      /* Disconnected from core: dim the character so it reads as asleep rather than
+         broken. It keeps breathing either way. */
+      #stage.offline {
+        filter: grayscale(0.7) brightness(0.75);
+        transition: filter 0.6s;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <!--
+      The always-to-hand strip. Lives in the character window rather than the panel
+      because mute and stop are the two things you reach for mid-sentence, and opening
+      a window to stop someone talking is absurd. Everything else is behind the gear.
+    -->
+    <div id="strip" class="bottom-left">
+      <button id="s-mic" title="Mute microphone">&#127908;</button>
+      <button id="s-stop" title="Stop talking">&#9632;</button>
+      <button id="s-panel" title="Control panel">&#9881;</button>
+    </div>
+    <div id="subtitle"></div>
+    <div id="watching">watching screen</div>
+    <div id="status">connecting…</div>
+
+    <!-- Order matters. Cubism Core must exist before the plugin registers itself,
+         and the plugin expects PIXI on window. -->
+    <script src="../node_modules/pixi.js/dist/browser/pixi.min.js"></script>
+    <!-- PixiJS 6 generates shader and batch code with `new Function`, which the CSP
+         above forbids. This is Pixi's own supported replacement for that path. The
+         browser build patches globalThis.PIXI on load — there is nothing to call, but
+         it must come after pixi and before any renderer is constructed. -->
+    <script src="../node_modules/@pixi/unsafe-eval/dist/browser/unsafe-eval.min.js"></script>
+    <script src="./vendor/live2dcubismcore.min.js"></script>
+    <script src="../node_modules/pixi-live2d-display/dist/cubism4.min.js"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

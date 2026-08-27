@@ -1,0 +1,242 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Aria</title>
+    <style>
+      :root {
+        --bg: #16161a; --panel: #1e1e24; --line: #2c2c35;
+        --text: #e8e8ee; --dim: #8b8b99; --accent: #c9a4ff; --on: #7ee787;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--text); font: 13px/1.5
+          system-ui, -apple-system, "Segoe UI", sans-serif;
+        display: flex; flex-direction: column; height: 100vh;
+      }
+      nav { display: flex; gap: 2px; padding: 8px 8px 0; background: var(--bg); }
+      nav button {
+        flex: 1; padding: 8px; border: 0; border-radius: 6px 6px 0 0;
+        background: transparent; color: var(--dim); cursor: pointer; font: inherit;
+      }
+      nav button.on { background: var(--panel); color: var(--text); }
+      main { flex: 1; overflow-y: auto; background: var(--panel); padding: 14px; }
+      section { display: none; }
+      section.on { display: block; }
+      .row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 9px 0; border-bottom: 1px solid var(--line); gap: 12px;
+      }
+      .row:last-child { border-bottom: 0; }
+      label { color: var(--text); }
+      .hint { color: var(--dim); font-size: 12px; margin: 2px 0 10px; }
+      select, button.act {
+        background: #26262e; color: var(--text); border: 1px solid var(--line);
+        border-radius: 6px; padding: 6px 10px; font: inherit; cursor: pointer;
+      }
+      button.act:hover, select:hover { border-color: var(--accent); }
+      .toggle {
+        width: 44px; height: 24px; border-radius: 12px; background: #34343f;
+        border: 0; position: relative; cursor: pointer; flex: none;
+      }
+      .toggle::after {
+        content: ""; position: absolute; top: 3px; left: 3px; width: 18px;
+        height: 18px; border-radius: 50%; background: var(--dim); transition: .15s;
+      }
+      .toggle[aria-pressed="true"] { background: #2f4636; }
+      .toggle[aria-pressed="true"]::after { left: 23px; background: var(--on); }
+      #stop { width: 100%; margin-top: 12px; padding: 10px; }
+      #log { font-size: 12px; }
+      #log div { padding: 5px 0; border-bottom: 1px solid var(--line); }
+      #log .who { color: var(--accent); }
+      #log .aria .who { color: var(--on); }
+      #log time { color: var(--dim); margin-right: 8px; }
+      .note {
+        display: flex; align-items: flex-start; gap: 8px; padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .note span { flex: 1; }
+      .note .src { color: var(--dim); font-size: 11px; }
+      .note button {
+        background: transparent; border: 0; color: var(--dim); cursor: pointer;
+        font-size: 15px; padding: 0 4px;
+      }
+      .note button:hover { color: #ff7b72; }
+      .empty { color: var(--dim); padding: 20px 0; text-align: center; }
+      footer { padding: 6px 12px; color: var(--dim); font-size: 11px; }
+
+      /* --- persona + memory editing --- */
+      textarea {
+        width: 100%; background: #16161a; color: var(--text); font: 12px/1.6
+          ui-monospace, "Cascadia Code", Consolas, monospace;
+        border: 1px solid var(--line); border-radius: 6px; padding: 10px;
+        resize: vertical;
+      }
+      textarea:focus { outline: 0; border-color: var(--accent); }
+      textarea[readonly] { color: var(--dim); }
+      .bar { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+      .bar .spacer { flex: 1; }
+      .bar .state { color: var(--dim); font-size: 12px; }
+      .bar .state.dirty { color: #ffd479; }
+      button.act[disabled] { opacity: .4; cursor: default; }
+      button.act:disabled:hover { border-color: var(--line); }
+      button.danger:hover { border-color: #ff7b72; color: #ff7b72; }
+      details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+      summary { cursor: pointer; color: var(--dim); }
+      details textarea { margin-top: 8px; }
+      .note input {
+        flex: 1; background: #16161a; color: var(--text); font: inherit;
+        border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px;
+      }
+      .note input:focus { outline: 0; border-color: var(--accent); }
+      .add { display: flex; gap: 8px; margin-bottom: 12px; }
+      .add input {
+        flex: 1; background: #16161a; color: var(--text); font: inherit;
+        border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
+      }
+      .add input:focus { outline: 0; border-color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <button data-tab="controls" class="on">Controls</button>
+      <button data-tab="character">Character</button>
+      <button data-tab="look">Look</button>
+      <button data-tab="talk">Transcript</button>
+      <button data-tab="memory">Memory</button>
+      <button data-tab="persona">Persona</button>
+    </nav>
+
+    <main>
+      <section id="controls" class="on">
+        <div class="row">
+          <label>Microphone</label>
+          <button class="toggle" id="mic" aria-pressed="false"></button>
+        </div>
+        <div class="row">
+          <label>Screen watching</label>
+          <button class="toggle" id="watch" aria-pressed="false"></button>
+        </div>
+        <div class="row">
+          <label>Wake word <span class="src" id="wakeword"></span></label>
+          <button class="toggle" id="wake" aria-pressed="false"></button>
+        </div>
+        <div class="row">
+          <label>Interrupt by voice</label>
+          <button class="toggle" id="barge" aria-pressed="false"></button>
+        </div>
+        <button class="act" id="stop">Stop talking</button>
+      </section>
+
+      <section id="character">
+        <div class="row">
+          <label>Voice</label>
+          <select id="voice"></select>
+        </div>
+        <div class="row">
+          <label>Emotion in voice</label>
+          <button class="toggle" id="emo" aria-pressed="false"></button>
+        </div>
+        <p class="hint">
+          Swaps apply on her next sentence. Nothing reloads, and the conversation and
+          memory are kept.
+        </p>
+      </section>
+
+      <section id="look">
+        <div class="row">
+          <label>Character</label>
+          <select id="model"></select>
+        </div>
+        <div class="row">
+          <label>Size</label>
+          <select id="scale">
+            <option value="0.7">Small</option>
+            <option value="1">Medium</option>
+            <option value="1.5">Large</option>
+            <option value="2">Huge</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Quick actions</label>
+          <select id="strip">
+            <option value="bottom-left">Bottom left</option>
+            <option value="bottom-right">Bottom right</option>
+            <option value="top-left">Top left</option>
+            <option value="top-right">Top right</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+        <p class="hint">Where the mic / stop / gear buttons sit on her window.</p>
+
+        <div class="row">
+          <label>Subtitles</label>
+          <button class="toggle" id="sub-on" aria-pressed="false"></button>
+        </div>
+        <div class="row">
+          <label>Caption position</label>
+          <select id="sub-pos">
+            <option value="top">Top</option>
+            <option value="middle">Middle</option>
+            <option value="bottom">Bottom</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Caption size <span class="src" id="sub-size-val"></span></label>
+          <input type="range" id="sub-size" min="8" max="48" step="1" />
+        </div>
+        <div class="row">
+          <label>Line length <span class="src" id="sub-chars-val"></span></label>
+          <input type="range" id="sub-chars" min="12" max="120" step="2" />
+        </div>
+        <p class="hint">
+          These live in the overlay, not in Aria — they persist in config.json and
+          apply immediately.
+        </p>
+      </section>
+
+      <section id="talk">
+        <div id="log"><div class="empty">Nothing said yet.</div></div>
+      </section>
+
+      <section id="memory">
+        <div class="add">
+          <input id="note-new" placeholder="Something she should remember about you…" />
+          <button class="act" id="note-add">Add</button>
+        </div>
+        <p class="hint">
+          Click a note to correct it. Anything you add or edit counts as something you
+          told her, so it is never dropped to make room.
+        </p>
+        <div id="notes"><div class="empty">She hasn't kept any notes yet.</div></div>
+      </section>
+
+      <section id="persona">
+        <p class="hint">
+          Who she is. This is the top of every prompt she gets — the screen rules, her
+          notes, the clock and her emotion vocabulary are added underneath automatically.
+          Changes apply to her next reply; nothing reloads and the conversation is kept.
+        </p>
+        <textarea id="persona-text" rows="20" spellcheck="false"></textarea>
+        <div class="bar">
+          <button class="act" id="persona-save" disabled>Save</button>
+          <button class="act danger" id="persona-reset">Reset to built-in</button>
+          <span class="spacer"></span>
+          <span class="state" id="persona-state"></span>
+        </div>
+
+        <details>
+          <summary>See the whole prompt she actually receives</summary>
+          <p class="hint">
+            Read-only, and assembled fresh each turn. If she is behaving oddly this is
+            usually where the reason is.
+          </p>
+          <textarea id="prompt-full" rows="16" readonly spellcheck="false"></textarea>
+        </details>
+      </section>
+    </main>
+
+    <footer id="status">connecting…</footer>
+    <script src="panel.js"></script>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+[project]
+name = "aria-core"
+version = "0.1.0"
+description = "Aria voice loop - mic to speaker"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=1.26",
+    "sounddevice>=0.4.7",
+    "faster-whisper>=1.0.3",   # CTranslate2, not torch - avoids the Blackwell CUDA mess
+    "onnxruntime>=1.18",       # Silero VAD; CPU is plenty at 0.13ms per frame
+    "kokoro-onnx>=0.5.0",      # pulls espeakng-loader, so no espeak-ng system install
+    "ollama>=0.6.0",
+    "websockets>=13.0",        # overlay transport
+    "mss>=9.0",                # screen capture
+    "pillow>=10.0",            # downscale + encode before sending to a vision model
+    "anthropic>=0.120",        # Claude vision backend; needs output_config/effort typing
+    "pyaec>=1.0.1",            # Speex AEC via aec-rs; speaker mode only, see audio/aec.py
+    # The [voice] extra is PyNaCl, which discord.py needs to encrypt an RTP stream. It
+    # warns "voice will NOT be supported" without it and then fails at connect time.
+    "discord.py[voice]>=2.5",
+    # Voice *receive* is not in discord.py at all — deliberately, it is undocumented
+    # Discord behaviour. This is the maintained extension for it, and it is alpha.
+    "discord-ext-voice-recv>=0.5",
+    # Discord's end-to-end voice encryption. Not optional despite discord.py treating
+    # it as such: a channel can *require* it, and the voice handshake is then closed
+    # with 4017 before any audio flows. See `discord_voice.dave_decrypt`.
+    "davey>=0.1.6",
+    "httpx>=0.27",             # OpenRouter streaming; already present under ollama/anthropic
+    # Kokoro's Mandarin voices were trained on misaki phonemes, and kokoro-onnx
+    # phonemises with espeak. Measured intelligibility of her own speech, read back by
+    # Whisper: espeak 0.46, misaki 0.73. See `tts/chinese.py`.
+    "misaki[zh]>=0.9.4",
+    # Whisper returns Simplified for Mandarin whatever you ask it. Pure Python, offline,
+    # ~0.1 ms a turn, and s2twp fixes vocabulary as well as glyphs.
+    "opencc-python-reimplemented>=0.1.7",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+aria = "aria.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aria"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

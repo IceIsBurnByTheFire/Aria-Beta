@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Electron
+node_modules/
+dist/
+out/
+.vite/
+
+# Models and weights — large binaries, fetched by setup scripts
+overlay/assets/models/*
+!overlay/assets/models/.gitkeep
+
+# Live2D's Cubism Core runtime — not redistributable, fetched by fetch-assets.mjs
+overlay/src/vendor/
+core/models/
+*.onnx
+*.gguf
+*.safetensors
+*.vrm
+*.moc3
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local state
+logs/
+*.log
+conversations/
+captures/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# What she remembers about you. Personal, and yours alone.
+core/data/
