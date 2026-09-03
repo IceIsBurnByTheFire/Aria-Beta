@@ -1,6 +1,8 @@
 # Aria
 
-A voice-first AI companion with an animated character that sits on your desktop.
+An AI desktop companion with a Live2D avatar, real-time voice interaction, and a configurable persona system.
+
+Built by Payaya. Developed with AI-assisted tooling.
 
 You talk to her out loud and she talks back. You can cut her off mid-sentence. She
 remembers things about you between sessions, she can look at your screen if you ask,
